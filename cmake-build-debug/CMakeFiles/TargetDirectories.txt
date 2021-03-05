@@ -1,0 +1,3 @@
+C:/Users/tomca/CLionProjects/DSA memory allocation/cmake-build-debug/CMakeFiles/DSA_memory_allocation.dir
+C:/Users/tomca/CLionProjects/DSA memory allocation/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/tomca/CLionProjects/DSA memory allocation/cmake-build-debug/CMakeFiles/rebuild_cache.dir
