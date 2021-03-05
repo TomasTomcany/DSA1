@@ -11,7 +11,8 @@ void memory_init(void* ptr, unsigned int size) {
     // nastavenie celeho pola na -1 namiesto garbage hodnot pre lepsi debugging
     memset(start, -1, size);
 
-    size -= size % 4;
+    size -= size % 4;                       // zarovnanie pamate na delitel 4
+
     // v hlavicke zaciatku nastavime velkost celeho volneho bloku, musime odpocitat od zadanej velkosti velkost hlavicky
     // a konca pre buducnost na rozlisenie ci je blok alokovany alebo nie rozlisime znamienkami pri velkosti bloku v
     // hlavicke, alokovany blok ma +, nealokovany -
@@ -22,6 +23,8 @@ void memory_init(void* ptr, unsigned int size) {
 }
 
 void* memory_alloc(unsigned int size) {
+    size += (4 - size % 4);             // padding, na rychlejsi presun medzi hlavickami
+
     // metodou first fit najdeme volne miesto pre blok
     void *current = start;
     while (*((int *)current) != 1){                     // kym sa nedostane na koniec
@@ -31,7 +34,7 @@ void* memory_alloc(unsigned int size) {
             break;
         }
         // posun na dalsiu hlavicku
-        current = (current + block_size  + 2*sizeof(int));
+        current = ((int *)current + (block_size  + 2*sizeof(int))/4);
     }
 
     // pokial sa nenasiel ziadny volny blok do ktoreho by sa nas alokovatelny blok, nealokujemeho a funkcia vrati NULL
@@ -48,15 +51,15 @@ void* memory_alloc(unsigned int size) {
     }
 
     (*((int *)current)) = size;                                 // hlavicka
-    void *footer = ((void *)current+size+sizeof(int));          // posun na paticku
+    int *footer = ((int *)current+(size+sizeof(int))/4);       // posun na paticku
     *((int *)footer) = size;                                    // paticka
 
     // velkost noveho prazdneho bloku je original velkost - velkost alokovaneho bloku - velkost hlavicky a paticky noveho bloku
     int free_size = -(original_size - size - 2*sizeof(int));
-    void *free_block = ((void *)footer+sizeof(int));                            // pointer volneho bloku
+    int *free_block = ((int *)footer+sizeof(int)/4);                            // pointer volneho bloku
     (*((int *)free_block)) = free_size;                                         // hlavicka
     // posun do paticky o velkost volneho bloku + velkost hlavicky
-    free_block = ((void *)free_block-free_size+sizeof(int));
+    free_block = ((int *)free_block-(free_size-sizeof(int))/4);
     (*((int *)free_block)) = free_size;                                         // paticka
 
     return current+sizeof(int);
@@ -111,7 +114,7 @@ int memory_check(void* ptr) {
         return 0;
     }
     ptr -= sizeof(int);                        // nastavenie pointra na alokovany blok na hlavicku
-    void *current = start;                     // nastavime pointer prechadzania haldy hlavicku po hlavicke na zaciatok
+    int *current = start;                     // nastavime pointer prechadzania haldy hlavicku po hlavicke na zaciatok
     int size = *((int *)current);
     while (size != 1){                         // pokial sa nedostaneme na koniec haldy
         if ((size > 1) && (current == ptr)){   // pokial je blok alokovany a pointre ukazuju na rovnaku adresu
@@ -119,10 +122,10 @@ int memory_check(void* ptr) {
         }
 
         if (size > 1) {                               // ak je blok alokovany
-            current += (size + 2 * sizeof(int));      // posun na dalsiu hlavicku
+            current += (size + 2 * sizeof(int))/4;      // posun na dalsiu hlavicku
         }
         else{                                         // ak je blok nealokovany
-            current -= (size - 2 * sizeof(int));      // posun na dalsiu hlavicku
+            current -= (size - 2 * sizeof(int))/4;      // posun na dalsiu hlavicku
         }
 
         size = *((int *) current);
