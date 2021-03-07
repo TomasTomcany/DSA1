@@ -24,7 +24,9 @@ void memory_init(void* ptr, unsigned int size) {
 }
 
 void* memory_alloc(unsigned int size) {
-    size += (4 - size % 4);             // padding, na rychlejsi presun medzi hlavickami a prevencia fragmentacie
+    if (size % 4 != 0) {
+        size += (4 - (size % 4));             // padding, na rychlejsi presun medzi hlavickami a prevencia fragmentacie
+    }
 
     // metodou first fit najdeme volne miesto pre blok
     int *current = start;                      // pointer prehladavanych hlaviciek nastavime na zaciatok
@@ -132,6 +134,7 @@ int memory_check(void* ptr) {
     }
     return 0;
 }
+
 void debug_tester(){
     char region[150];
     memory_init(region, 101);
@@ -143,7 +146,7 @@ void debug_tester(){
     int a3 = memory_check(ptr3);
     char *ptr4 = (char *) memory_alloc(40);          // alokacia bloku ktory sa nezmesti
     int a4 = memory_check(ptr4);
-    memory_free(ptr1);                                    // uvolnenie bloku na zaciatku, funkcia sa nepozera mimo pamat
+    memory_free(ptr1);                                   // uvolnenie bloku na zaciatku, funkcia sa nepozera mimo pamat
     int a5 = memory_check(ptr1);
     char *ptr5 = (char *) memory_alloc(8);
     memory_free(ptr3);                                   // spajanie s nasledujucim blokom
@@ -167,31 +170,37 @@ void tester(char *region, int min_memory, int max_memory, int min_block, int max
     memory_init(region, memory);
 
     int block = (rand() % (max_block-min_block+1)) + min_block;
-    while(ideal <= memory - min_block){         // dokym v idealnom rieseni nebude dostatok volnej pamate na alokovanie
-        if (random_blocks == 1){                                        // ked maju byt bloky nerovnake
+    while(memory - ideal > min_block){
+        // dokym v idealnom rieseni nebude dostatok volnej pamate na alokovanie najmensieho bloku
+        if (random_blocks == 1){   // ked maju byt bloky nerovnake
             block = (rand() % (max_block-min_block+1)) + min_block;
-            if (ideal + block > memory){continue;}          // posun na dalsiu iteraciu pokial sa momentalny blok nezmesti
         }
+
+        // kalkulacia idealneho pripadu
         ideal += block;
         ideal_blocks++;
+
+        // simulacia alokacie
         ptr[i] = memory_alloc(block);
-        if (ptr[i]){                    // ak sa blok uspesne alokoval mozeme ho pripocitat do celkoveho poctu
+        if (ptr[i] != NULL){     // ak sa blok uspesne alokoval mozeme ho pripocitat do poctu realne alokovanych blokov
             real_blocks++;
             i++;
+
         }
     }
 
-    // uvolnenie pamate
-    for (int j = 0; j <= i; j++){
-        memory_free(ptr[j]);
-        j++;
+    // uvolnenie pamati
+    for (int j = 0; i <= j; j++){
+        memory_free(ptr[i]);
     }
 
+
     // vyhodnotenie % uspesnosti alokovania oproti realnemu rieseniu
-    float block_result = ((float)real_blocks/ideal_blocks)*100;
+    float block_result = ((float)real_blocks/(float)ideal_blocks)*100;
     printf("Na pamati o velkosti %d bytov bolo alokovanych "
            "%.2f%% blokov v porovnani s idealnym riesenim.\n", memory, block_result);
 }
+
 
 int main() {
     // po spusteni by nemal davat ziadny error, sledovanie pamate v debugging tool ci vsetko funguje tak ako ma
@@ -200,12 +209,10 @@ int main() {
     char region[1000000];
     srand(time(0));
     for (int i = 0; i < 10;i++) {
-        //tester(region, 50, 200, 8, 24, 0);
-        //tester(region, 50, 200, 8, 24, 1);
-        //tester(region, 5000, 500000, 500, 5000, 1);
-        tester(region, 50000, 1000000, 8, 50000, 1);
+        tester(region, 50, 200, 8, 24, 0);                        // 1. scenar
+        //tester(region, 50, 200, 8, 24, 1);                        // 2. scenar
+        //tester(region, 5000, 500000, 500, 5000, 1);               // 3. scenar
+        //tester(region, 50000, 1000000, 8, 50000, 1);              // 4. scenar
     }
     return 0;
 }
-
-
