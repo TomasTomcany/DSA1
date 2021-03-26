@@ -33,7 +33,7 @@ void* memory_alloc(unsigned int size) {
     while (*current != 1){                     // kym sa nedostane na koniec
         int block_size = abs(*current);
         // ak sa najde volny blok, do ktoreho sa nas alokovany blok zmesti, prestan prehladavat nasu haldu
-        if (*current < 0 && block_size  > size+2*sizeof(int)){
+        if (*current < 0 && block_size > size+2*sizeof(int)){
             break;
         }
         // posun na dalsiu hlavicku
@@ -209,9 +209,9 @@ int main() {
     char region[1000000];
     srand(time(0));
     for (int i = 0; i < 10;i++) {
-        tester(region, 50, 200, 8, 24, 0);                        // 1. scenar
+        //tester(region, 50, 200, 8, 24, 0);                        // 1. scenar
         //tester(region, 50, 200, 8, 24, 1);                        // 2. scenar
-        //tester(region, 5000, 500000, 500, 5000, 1);               // 3. scenar
+        tester(region, 5000, 500000, 500, 5000, 1);               // 3. scenar
         //tester(region, 50000, 1000000, 8, 50000, 1);              // 4. scenar
     }
     return 0;
